@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>My Tea - Fresh Cafe & Delivery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+  <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl flex flex-col relative overflow-x-hidden">
+    <!-- Top Header -->
+    <header class="bg-amber-600 text-white px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-md">
+      <div class="flex items-center gap-2">
+        <div class="bg-white text-amber-600 p-1.5 rounded-xl font-extrabold shadow-sm">
+          <i data-lucide="coffee" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight tracking-tight">My Tea</h1>
+          <p class="text-[11px] text-amber-100 font-medium">100% Pure Veg Cafe</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="myOrdersBtn" type="button" onclick="window.openMyOrders()" class="hidden text-xs bg-amber-700/90 hover:bg-amber-800 px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1">
+          <i data-lucide="user-check" class="w-3.5 h-3.5"></i> My Account
+        </button>
+        <button type="button" onclick="window.openAdminModal()" class="text-xs bg-slate-900/90 hover:bg-slate-900 text-amber-300 px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 shadow">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Owner
+        </button>
+      </div>
+    </header>
+
+    <!-- SCREEN 1: INSTANT LOGIN -->
+    <section id="screen-login" class="flex-1 flex flex-col justify-center p-6 pb-16">
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+          <i data-lucide="cup-soda" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-900">Welcome to My Tea</h2>
+        <p class="text-sm text-slate-500 mt-1">Garma-garam Special Tea, Burgers & Pizzas</p>
+      </div>
+
+      <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Aapka Naam *</label>
+          <input id="loginName" type="text" placeholder="Apna poora naam likhein" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-500 bg-white text-sm font-medium" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">10-Digit Mobile Number *</label>
+          <div class="flex">
+            <span class="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 text-slate-600 text-sm font-bold">+91</span>
+            <input id="loginPhone" type="tel" maxlength="10" placeholder="9876543210" class="w-full px-4 py-3 rounded-r-xl border border-slate-200 focus:outline-none focus:border-amber-500 bg-white text-sm font-bold tracking-wider" />
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Valid 10-digit Indian mobile number dalein (6-9 se shuru).</p>
+        </div>
+
+        <div id="otpBox" class="hidden space-y-2 bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+          <p id="otpHint" class="text-xs text-emerald-800 font-extrabold text-center"></p>
+          <input id="loginOtp" type="tel" maxlength="4" placeholder="Enter 4-Digit Code" class="w-full px-4 py-2.5 rounded-xl border-2 border-emerald-400 focus:outline-none bg-white text-center text-lg font-extrabold tracking-[0.4em]" />
+        </div>
+
+        <button id="loginActionBtn" type="button" onclick="window.handleInstantLogin()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-amber-600/20 transition active:scale-95">
+          Generate Verification Code
+        </button>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: MENU (SEARCH BOX + SPECIAL TEA ALWAYS ON TOP) -->
+    <section id="screen-menu" class="hidden flex-1 flex flex-col pb-36">
+      <div class="bg-amber-50 px-4 py-2.5 border-b border-amber-100 flex items-center justify-between text-xs">
+        <span class="font-semibold text-slate-700">Hi, <span id="displayUserName" class="text-amber-700 font-bold">Guest</span>!</span>
+        <span class="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span> Pure Veg
+        </span>
+      </div>
+
+      <!-- Menu Search Box -->
+      <div class="px-4 pt-3 pb-1">
+        <div class="relative">
+          <input id="menuSearchInput" type="text" oninput="window.renderMenu()" placeholder="Search menu (Special Tea, Burger, Pizza)..." class="w-full pl-9 pr-14 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-amber-500 bg-slate-50 text-xs font-medium" />
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+          <button id="clearSearchBtn" type="button" onclick="window.clearMenuSearch()" class="hidden text-[10px] font-bold text-slate-600 hover:text-slate-900 absolute right-2.5 top-2 px-2 py-1 rounded-lg bg-slate-200/80">Clear</button>
+        </div>
+      </div>
+
+      <div class="p-4 pt-2 space-y-3" id="menuContainer">
+        <p class="text-xs text-slate-400 text-center py-8">Loading fresh menu...</p>
+      </div>
+
+      <!-- Bottom Cart Bar -->
+      <div id="cartBar" class="hidden fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-900 text-white p-3.5 shadow-2xl z-30 flex items-center justify-between rounded-t-2xl">
+        <div>
+          <p class="text-xs text-slate-400 font-medium"><span id="cartCount">0</span> Items Selected</p>
+          <p class="text-lg font-extrabold text-amber-400">₹<span id="cartSubtotal">0</span></p>
+        </div>
+        <button type="button" onclick="window.goToAddress()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm shadow-md">
+          Next: Address <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: ADDRESS & AUTO-DETECTED GPS DISTANCE -->
+    <section id="screen-address" class="hidden flex-1 flex flex-col p-4 pb-28 space-y-4">
+      <button type="button" onclick="window.showScreen('menu')" class="text-xs font-bold text-slate-500 flex items-center gap-1 w-fit">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Menu
+      </button>
+
+      <h2 class="text-xl font-extrabold text-slate-900">Delivery Location</h2>
+
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-2.5">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-blue-950 flex items-center gap-1.5">
+              <i data-lucide="locate-fixed" class="w-4 h-4 text-blue-600"></i> 1. Auto GPS Location *
+            </h3>
+            <p id="gpsStatusText" class="text-xs text-blue-700 mt-0.5">GPS se exact distance measure ho rahi hai...</p>
+          </div>
+          <button onclick="window.detectUserGPS()" id="gpsBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shrink-0 shadow-sm">
+            Detect GPS
+          </button>
+        </div>
+        <div id="distanceBadge" class="hidden bg-white rounded-xl p-2.5 border border-blue-100 space-y-1 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-600">Cafe se exact doori:</span>
+            <span class="font-extrabold text-blue-700 text-sm"><span id="calcDistanceKm">0.0</span> km</span>
+          </div>
+          <p id="gpsAccuracyText" class="text-[10px] text-slate-400"></p>
+        </div>
+      </div>
+
+      <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+        <h3 class="text-xs font-extrabold text-slate-700 uppercase">2. Exact Delivery Address *</h3>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">House / Flat / Shop No. & Floor *</label>
+          <input id="addrHouseInput" type="text" placeholder="e.g. House No. 42, 2nd Floor" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-amber-500 bg-white" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Street / Area / Landmark *</label>
+          <input id="addrLandmarkInput" type="text" placeholder="e.g. Near Shiv Mandir, Main Road" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-amber-500 bg-white" />
+        </div>
+      </div>
+
+      <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 space-y-2">
+        <h3 class="text-sm font-extrabold text-slate-800">Delivery Charge (₹0 Gateway Fee)</h3>
+        <p id="freeDelNotice" class="hidden text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg"></p>
+        <div class="text-xs space-y-1 text-slate-600 border-t border-amber-200/60 pt-2">
+          <div class="flex justify-between"><span>Base Price:</span><span class="font-bold">₹<span id="feeBase">15</span></span></div>
+          <div class="flex justify-between"><span>Distance Charge (<span id="feeKmText">0.0</span> km × ₹<span id="feePerKmRate">5</span>):</span><span class="font-bold">₹<span id="feeDist">0</span></span></div>
+          <div class="flex justify-between text-sm font-extrabold text-slate-900 border-t border-amber-200 pt-1.5 mt-1">
+            <span>Total Delivery Charge:</span>
+            <span class="text-amber-700">₹<span id="feeTotal">0</span></span>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" onclick="window.goToPayment()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 rounded-xl shadow-lg">
+        Proceed to Payment
+      </button>
+    </section>
+
+    <!-- SCREEN 4: PAYMENT -->
+    <section id="screen-payment" class="hidden flex-1 flex flex-col p-4 pb-28 space-y-4">
+      <button type="button" onclick="window.showScreen('address')" class="text-xs font-bold text-slate-500 flex items-center gap-1 w-fit">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Address
+      </button>
+
+      <h2 class="text-xl font-extrabold text-slate-900">Select Payment Method</h2>
+
+      <div class="bg-slate-900 text-white rounded-2xl p-4 space-y-2 shadow-lg">
+        <div class="flex justify-between text-xs text-slate-300"><span>Items Total</span><span>₹<span id="payItemTotal">0</span></span></div>
+        <div class="flex justify-between text-xs text-slate-300"><span>Delivery Fee</span><span>₹<span id="payDeliveryTotal">0</span></span></div>
+        <div class="flex justify-between text-lg font-extrabold text-amber-400 border-t border-slate-700 pt-2">
+          <span>To Pay</span><span>₹<span id="payGrandTotal">0</span></span>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-[11px] text-slate-600 space-y-1">
+        <p class="font-extrabold text-slate-800">Order & Doorstep Policy:</p>
+        <p>• Cafe ke <strong>Accept</strong> karne se pehle order cancel ho sakta hai; accept hone ke baad cancellation nahi hoga.</p>
+        <p>• Delivery ke waqt <strong>Owner aur Customer dono</strong> ki <strong>Received OK</strong> confirmation ke baad hi order final clear hoga.</p>
+        <p>• Doorstep par mana karne par online payment refund nahi hoga aur COD strike lag sakti hai.</p>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Option 1: Instant UPI / Dynamic QR -->
+        <label class="flex items-center justify-between p-3.5 border-2 rounded-2xl cursor-pointer border-amber-500 bg-amber-50/40">
+          <div class="flex items-center gap-3">
+            <input type="radio" name="payMethod" value="Online UPI" checked onchange="window.toggleUpiBox(true)" class="accent-amber-600 w-4 h-4" />
+            <div>
+              <p class="text-sm font-bold text-slate-900">Pay via UPI App / Scan QR</p>
+              <p class="text-[11px] text-slate-500">Tanish Saini • Zero Gateway Fee</p>
+            </div>
+          </div>
+          <i data-lucide="smartphone" class="w-5 h-5 text-amber-600"></i>
+        </label>
+
+        <!-- QR & Direct UPI Box -->
+        <div id="upiDetailsBox" class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 text-center shadow-sm">
+          <div class="flex items-center justify-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-amber-700 text-white text-xs font-extrabold flex items-center justify-center">T</span>
+            <p class="text-sm font-extrabold text-slate-800">Tanish Saini</p>
+          </div>
+          <p class="text-xs font-semibold text-slate-600">Scan to pay exact <span class="font-extrabold text-slate-900">₹<span id="qrAmountText">0</span></span> with any UPI app</p>
+          <div class="bg-white p-3 rounded-2xl border-2 border-slate-100 inline-block mx-auto shadow-inner">
+            <img id="dynamicQrImage" src="" alt="Scan to Pay Tanish Saini" class="w-48 h-48 mx-auto object-contain" />
+          </div>
+          <div class="bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 flex items-center justify-between text-left">
+            <div>
+              <p class="text-[10px] text-slate-400 font-bold uppercase">UPI ID</p>
+              <p class="text-xs font-extrabold text-slate-800">sainitanish8449@oksbi</p>
+            </div>
+            <button type="button" onclick="window.copyUpiId()" class="text-[11px] font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg">Copy</button>
+          </div>
+          <button type="button" onclick="window.launchUpiApp()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-extrabold py-3 rounded-xl shadow flex items-center justify-center gap-2">
+            <i data-lucide="external-link" class="w-4 h-4"></i> Open UPI App & Pay
+          </button>
+
+          <!-- Payer Name helper if paying from someone else's UPI -->
+          <div class="text-left">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">UPI Sender / Payer Name (Agar kisi aur ke naam se pay kiya ho)</label>
+            <input id="upiPayerNameInput" type="text" placeholder="Optional — e.g. Shiva" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-amber-500 bg-slate-50" />
+          </div>
+
+          <label class="flex items-start gap-2 text-left bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-[11px] text-slate-700 cursor-pointer">
+            <input id="upiPaidConfirmCheckbox" type="checkbox" class="mt-0.5 accent-amber-600 w-4 h-4 shrink-0" />
+            <span>Maine UPI app se ₹<span id="upiConfirmAmtText">0</span> ka payment complete kar diya hai.</span>
+          </label>
+        </div>
+
+        <!-- Option 2: Cash on Delivery (Auto-blocks if previous doorstep refusal) -->
+        <label id="codOptionLabel" class="flex items-center justify-between p-3.5 border rounded-2xl cursor-pointer border-slate-200 bg-white">
+          <div class="flex items-center gap-3">
+            <input id="codRadioInput" type="radio" name="payMethod" value="Cash on Delivery (COD)" onchange="window.toggleUpiBox(false)" class="accent-amber-600 w-4 h-4" />
+            <div>
+              <p class="text-sm font-bold text-slate-900">Cash on Delivery (COD)</p>
+              <p id="codSubText" class="text-[11px] text-slate-500">Order milne par cash dein</p>
+            </div>
+          </div>
+          <i data-lucide="banknote" class="w-5 h-5 text-emerald-600"></i>
+        </label>
+      </div>
+
+      <button id="placeOrderBtn" type="button" onclick="window.submitRealOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 rounded-xl shadow-lg text-base">
+        Confirm & Place Order
+      </button>
+    </section>
+
+    <!-- SCREEN 5: CUSTOMER ACCOUNT & ORDER HISTORY -->
+    <section id="screen-orders" class="hidden flex-1 flex flex-col p-4 pb-24 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-extrabold text-slate-900">My Account & History</h2>
+        <button type="button" onclick="window.showScreen('menu')" class="text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg">+ Order More</button>
+      </div>
+
+      <div class="bg-slate-900 text-white rounded-2xl p-4 space-y-3 shadow-md">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <div>
+            <p id="accProfileName" class="font-extrabold text-base text-amber-400">Customer Name</p>
+            <p id="accProfilePhone" class="text-xs text-slate-400">+91 0000000000</p>
+          </div>
+          <button type="button" onclick="window.logoutCustomer()" class="text-[11px] bg-red-500/20 text-red-300 border border-red-500/30 px-2.5 py-1 rounded-lg font-bold">Logout</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-center pt-1">
+          <div class="bg-slate-800/80 p-2.5 rounded-xl">
+            <p class="text-[10px] text-slate-400 uppercase font-bold">Cleared Orders</p>
+            <p id="accTotalOrdersCount" class="text-lg font-extrabold text-white">0</p>
+          </div>
+          <div class="bg-slate-800/80 p-2.5 rounded-xl">
+            <p class="text-[10px] text-slate-400 uppercase font-bold">Total Spent</p>
+            <p class="text-lg font-extrabold text-emerald-400">₹<span id="accTotalSpent">0</span></p>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="text-xs font-bold uppercase text-slate-500">Order History</h3>
+      <div id="customerOrdersList" class="space-y-3"></div>
+    </section>
+
+    <!-- SCREEN 6: OWNER ADMIN DASHBOARD -->
+    <section id="screen-admin" class="hidden flex-1 flex flex-col p-4 bg-slate-900 text-white space-y-4 pb-24">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-lg font-extrabold text-amber-400 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i> Owner Control Panel
+          </h2>
+          <p class="text-[11px] text-emerald-400 font-semibold">Session Active • Auto-Login Enabled</p>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="window.lockOwnerSession()" class="text-[11px] bg-red-600/20 text-red-300 border border-red-500/40 px-2.5 py-1.5 rounded-lg font-bold">Lock</button>
+          <button type="button" onclick="window.exitAdminDashboard()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg font-bold">Menu</button>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 flex flex-wrap items-center justify-between gap-2">
+        <button onclick="window.enablePushAlerts()" id="notifPermBtn" type="button" class="text-[11px] bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1">
+          <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i> Enable Alert Sound
+        </button>
+        <button type="button" onclick="window.openOwnerWhatsAppAlert()" class="text-[11px] bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1">
+          <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp Alert
+        </button>
+        <button type="button" onclick="window.setCafeLocationHere()" class="text-[11px] bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Cafe GPS
+        </button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-1.5 bg-slate-800 p-1 rounded-xl">
+        <button id="tabOrdersBtn" type="button" onclick="window.switchAdminTab('orders')" class="py-2 rounded-lg text-[11px] font-extrabold bg-amber-500 text-slate-950">
+          Live Orders
+        </button>
+        <button id="tabMenuBtn" type="button" onclick="window.switchAdminTab('menu')" class="py-2 rounded-lg text-[11px] font-extrabold text-slate-300">
+          Menu & Fee
+        </button>
+        <button id="tabRecordsBtn" type="button" onclick="window.switchAdminTab('records')" class="py-2 rounded-lg text-[11px] font-extrabold text-slate-300">
+          Records / Reset
+        </button>
+      </div>
+
+      <!-- TAB 1: INCOMING ORDERS -->
+      <div id="adminTabOrders" class="space-y-2">
+        <div id="adminOrdersList" class="space-y-3">
+          <p class="text-xs text-slate-500 text-center py-6">Waiting for orders...</p>
+        </div>
+      </div>
+
+      <!-- TAB 2: CUSTOM DELIVERY FEE + MENU + CHANGE OWNER PASSWORD -->
+      <div id="adminTabMenu" class="hidden space-y-4">
+        <div class="bg-slate-800 p-3.5 rounded-2xl border border-amber-500/40 space-y-2.5">
+          <p class="text-xs font-extrabold text-amber-400 uppercase">Custom Delivery Charge Rule (Owner Control)</p>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-1">Base Fee (₹)</label>
+              <input id="cfgBaseFee" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-1">Per KM (₹)</label>
+              <input id="cfgPerKm" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-1">Free Above ₹</label>
+              <input id="cfgFreeAbove" type="number" placeholder="0 = Off" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold" />
+            </div>
+          </div>
+          <button type="button" onclick="window.saveDeliveryConfig()" class="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold py-2 rounded-xl">
+            Save Delivery Charge Rule
+          </button>
+        </div>
+
+        <div class="bg-slate-800 p-3.5 rounded-2xl border border-sky-500/40 space-y-2.5">
+          <p class="text-xs font-extrabold text-sky-400 uppercase">Change Owner Password</p>
+          <div class="grid grid-cols-2 gap-2">
+            <input id="currPassInput" type="password" placeholder="Current Password" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+            <input id="newPassInput" type="password" placeholder="New Password (4+ chars)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+          </div>
+          <button type="button" onclick="window.changeOwnerPassword()" class="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs font-extrabold py-2 rounded-xl">
+            Update Owner Password
+          </button>
+        </div>
+
+        <div class="bg-slate-800 p-3.5 rounded-2xl border border-slate-700 space-y-2.5">
+          <p class="text-xs font-extrabold text-amber-400 uppercase">+ Add New Menu Item</p>
+          <input id="newItemName" type="text" placeholder="Item Name (e.g. Cold Coffee)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+          <input id="newItemDesc" type="text" placeholder="Short Description" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+          <div class="grid grid-cols-3 gap-2">
+            <input id="newItemPrice" type="number" placeholder="Price ₹" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+            <input id="newItemOffer" type="number" placeholder="Offer ₹ (Opt)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+            <input id="newItemTag" type="text" placeholder="Tag (Special)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+          </div>
+          <button type="button" onclick="window.addNewMenuItem()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold py-2.5 rounded-xl">
+            Save & Publish Item
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <p class="text-xs font-bold uppercase text-slate-400">Current Menu (Stock & Price Control)</p>
+          <div id="adminMenuList" class="space-y-2.5"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: ALL-TIME & DAILY ORDER RECORDS + CLEAR HISTORY -->
+      <div id="adminTabRecords" class="hidden space-y-4">
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xs font-extrabold text-amber-400 uppercase">Cleared Sale Record (Dual OK Only)</p>
+            <button type="button" onclick="window.resetOrderHistoryForFreshStart()" class="text-[10px] bg-red-600 hover:bg-red-700 text-white font-extrabold px-2.5 py-1 rounded-lg">
+              Clear / Reset History
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-900 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-400 uppercase font-bold">Cleared Orders</p>
+              <p id="recAllTimeOrders" class="text-xl font-extrabold text-white mt-0.5">0</p>
+            </div>
+            <div class="bg-slate-900 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-400 uppercase font-bold">Cleared Revenue</p>
+              <p class="text-xl font-extrabold text-emerald-400 mt-0.5">₹<span id="recAllTimeRevenue">0</span></p>
+            </div>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-300 bg-slate-900/60 px-3 py-2 rounded-xl">
+            <span>Cancelled / Unpaid: <strong id="recRefundCount" class="text-amber-300">0</strong></span>
+            <span>Doorstep Refused: <strong id="recRefusedCount" class="text-red-300">0</strong></span>
+          </div>
+        </div>
+
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xs font-extrabold text-sky-400 uppercase">Daily Cleared Report</p>
+            <input id="recordDateFilter" type="date" onchange="window.renderSalesRecords()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white" />
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-900 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-400 uppercase font-bold">Day Cleared Orders</p>
+              <p id="recDayOrders" class="text-lg font-extrabold text-white mt-0.5">0</p>
+            </div>
+            <div class="bg-slate-900 p-3 rounded-xl">
+              <p class="text-[10px] text-slate-400 uppercase font-bold">Day Cleared Sale</p>
+              <p class="text-lg font-extrabold text-amber-400 mt-0.5">₹<span id="recDayRevenue">0</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <p class="text-xs font-bold uppercase text-slate-400">Order Log (Fresh Start Ke Baad)</p>
+          <div id="adminRecordsLog" class="space-y-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Creator Attribution Footer -->
+    <footer class="mt-auto border-t border-slate-200 bg-slate-50 px-4 py-3 text-center text-[11px] text-slate-600">
+      <p class="font-bold text-slate-800">Made by Vivek</p>
+      <p class="text-[10px] text-slate-500">vk2123783@gmail.com</p>
+    </footer>
+
+    <!-- SECURE OWNER LOGIN MODAL -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl p-5 w-full max-w-xs space-y-4 text-center shadow-2xl">
+        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto">
+          <i data-lucide="lock" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="font-extrabold text-lg text-slate-900">Owner Exclusive Access</h3>
+          <p class="text-xs text-slate-500">Ek baar unlock karne par session save rahega</p>
+        </div>
+        <input id="adminPasswordInput" type="password" placeholder="Enter Owner Password" class="w-full border-2 border-slate-200 rounded-xl py-2.5 px-3 text-center text-sm font-bold focus:outline-none focus:border-amber-500" />
+        <div class="flex gap-2">
+          <button type="button" onclick="window.closeAdminModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-xs font-bold">Cancel</button>
+          <button type="button" onclick="window.verifyAdminLogin()" class="flex-1 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold">Unlock</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & App Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, setDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwiQ0EJ0ZQkfs8n5LZy9ItnQBdbbQ7rKQ",
+      authDomain: "my-tea-70f6d.firebaseapp.com",
+      projectId: "my-tea-70f6d",
+      storageBucket: "my-tea-70f6d.firebasestorage.app",
+      messagingSenderId: "462485805964",
+      appId: "1:462485805964:web:c24e4d987bfa69edd454a9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const ONESIGNAL_APP_ID = "b5d315e6-1350-4913-9411-4a8eef8de062";
+
+    const DEFAULT_ITEMS = [
+      { id: 'tea', name: 'Special Tea', desc: 'Kadak adrak & elaichi wali special kulhad chai', price: 20, offerPrice: null, tag: 'Bestseller', available: true },
+      { id: 'b_small', name: 'Small Cheese Burger', desc: 'Crispy aloo tikki with melted cheese slice', price: 30, offerPrice: null, tag: 'Pocket Friendly', available: true },
+      { id: 'b_med', name: 'Medium Paneer Cheese Burger', desc: 'Spiced paneer patty with double cheese', price: 60, offerPrice: null, tag: 'Popular', available: true },
+      { id: 'b_big', name: 'Big Paneer Cheese Burger', desc: 'Jumbo double patty paneer & loaded cheese', price: 80, offerPrice: null, tag: 'Chef Special', available: true },
+      { id: 'p_small', name: 'Cheese Pizza (Small)', desc: '7-inch fresh crust loaded with mozzarella', price: 70, offerPrice: null, tag: 'Veg', available: true },
+      { id: 'p_med', name: 'Medium Cheese Pizza', desc: '10-inch extra cheese burst delight', price: 100, offerPrice: null, tag: 'Value', available: true },
+      { id: 'p_big', name: 'Big Cheese Pizza', desc: '12-inch family size loaded cheese pizza', price: 160, offerPrice: null, tag: 'Party Size', available: true }
+    ];
+
+    let menuItems = [];
+    let rawOrdersAll = [];
+    let visibleOrdersCache = [];
+    let currentUser = JSON.parse(localStorage.getItem('mytea_user') || 'null');
+    let generatedOtp = null;
+    let cart = {};
+    let userCoords = null;
+    let gpsDetected = false;
+    let calculatedKm = 0;
+    let upiAppOpened = false;
+
+    const DEFAULT_OWNER_PASS = "Golu@715";
+    let activeOwnerPassword = localStorage.getItem('mytea_owner_pass_cache') || DEFAULT_OWNER_PASS;
+    let historyResetAt = Number(localStorage.getItem('mytea_history_reset_at') || 0);
+
+    const OWNER_UPI_ID = "sainitanish8449@oksbi";
+    const OWNER_NAME = "Tanish Saini";
+    const OWNER_WA_PHONE = "917668342246";
+    const OWNER_SESSION_KEY = "mytea_owner_session_active_v2";
+
+    let cafeSettings = {
+      cafeLat: 28.6139,
+      cafeLng: 77.2090,
+      baseFee: 15,
+      perKmFee: 5,
+      freeAboveAmount: 0
+    };
+
+    let ringInterval = null;
+
+    function safeRenderIcons() {
+      try {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      } catch (e) {}
+    }
+
+    function initOneSignalSafe(isOwner) {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        try {
+          if (!window.__myteaOneSignalInited) {
+            await OneSignal.init({
+              appId: ONESIGNAL_APP_ID,
+              allowLocalhostAsOrigin: true
+            });
+            window.__myteaOneSignalInited = true;
+          }
+          if (isOwner && OneSignal.User && typeof OneSignal.User.addTag === 'function') {
+            await OneSignal.User.addTag("role", "owner");
+          }
+        } catch (err) {}
+      });
+    }
+
+    function getLocalDateISO(d = new Date()) {
+      const off = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - off * 60000);
+      return local.toISOString().split('T')[0];
+    }
+    const dateInputEl = document.getElementById('recordDateFilter');
+    if (dateInputEl) dateInputEl.value = getLocalDateISO();
+
+    function sortMenuSpecialTeaFirst(items) {
+      return [...items].sort((a, b) => {
+        const aIsTea = a.id === 'tea' || (a.name || '').trim().toLowerCase() === 'special tea';
+        const bIsTea = b.id === 'tea' || (b.name || '').trim().toLowerCase() === 'special tea';
+        if (aIsTea && !bIsTea) return -1;
+        if (!aIsTea && bIsTea) return 1;
+        return 0;
+      });
+    }
+
+    async function initMenuSync() {
+      try {
+        const snap = await getDocs(collection(db, "menu"));
+        if (snap.empty) {
+          for (const item of DEFAULT_ITEMS) {
+            await setDoc(doc(db, "menu", item.id), item);
+          }
+        }
+        onSnapshot(collection(db, "menu"), (snapshot) => {
+          const raw = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          menuItems = sortMenuSpecialTeaFirst(raw);
+          window.renderMenu();
+          renderAdminMenu();
+          updateCartBar();
+        });
+      } catch (e) {}
+    }
+    initMenuSync();
+
+    function applyHistoryCutoff() {
+      visibleOrdersCache = rawOrdersAll.filter(o => (Number(o.createdAt) || 0) > historyResetAt);
+      if (!document.getElementById('screen-admin').classList.contains('hidden')) {
+        renderAdminOrdersAndAlerts();
+      }
+      if (!document.getElementById('screen-orders').classList.contains('hidden')) {
+        renderCustomerOrdersList();
+      }
+    }
+
+    onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snapshot) => {
+      rawOrdersAll = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyHistoryCutoff();
+    });
+
+    onSnapshot(doc(db, "settings", "cafe"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.cafeLat) cafeSettings.cafeLat = data.cafeLat;
+        if (data.cafeLng) cafeSettings.cafeLng = data.cafeLng;
+        if (data.baseFee !== undefined) cafeSettings.baseFee = Number(data.baseFee);
+        if (data.perKmFee !== undefined) cafeSettings.perKmFee = Number(data.perKmFee);
+        if (data.freeAboveAmount !== undefined) cafeSettings.freeAboveAmount = Number(data.freeAboveAmount);
+        if (data.ownerPassword) {
+          activeOwnerPassword = String(data.ownerPassword);
+          localStorage.setItem('mytea_owner_pass_cache', activeOwnerPassword);
+        }
+        if (data.historyResetAt && Number(data.historyResetAt) > historyResetAt) {
+          historyResetAt = Number(data.historyResetAt);
+          localStorage.setItem('mytea_history_reset_at', String(historyResetAt));
+          applyHistoryCutoff();
+        }
+        syncConfigInputs();
+        updateDeliveryFormula();
+      }
+    });
+
+    function syncConfigInputs() {
+      const b = document.getElementById('cfgBaseFee');
+      const k = document.getElementById('cfgPerKm');
+      const f = document.getElementById('cfgFreeAbove');
+      if (b) b.value = cafeSettings.baseFee;
+      if (k) k.value = cafeSettings.perKmFee;
+      if (f) f.value = cafeSettings.freeAboveAmount || '';
+    }
+    syncConfigInputs();
+
+    window.showScreen = (name) => {
+      const modal = document.getElementById('adminModal');
+      if (modal) modal.classList.add('hidden');
+      ['login', 'menu', 'address', 'payment', 'orders', 'admin'].forEach(s => {
+        const el = document.getElementById('screen-' + s);
+        if (el) el.classList.add('hidden');
+      });
+      const target = document.getElementById('screen-' + name);
+      if (target) target.classList.remove('hidden');
+      safeRenderIcons();
+    };
+
+    function bootAppState() {
+      const isOwnerActive = localStorage.getItem(OWNER_SESSION_KEY) === '1';
+      initOneSignalSafe(isOwnerActive);
+
+      if (isOwnerActive) {
+        if (currentUser) {
+          document.getElementById('displayUserName').innerText = currentUser.name;
+          document.getElementById('myOrdersBtn').classList.remove('hidden');
+        }
+        window.showScreen('admin');
+        renderAdminOrdersAndAlerts();
+      } else if (currentUser) {
+        document.getElementById('displayUserName').innerText = currentUser.name;
+        document.getElementById('myOrdersBtn').classList.remove('hidden');
+        const savedHouse = localStorage.getItem('mytea_house');
+        const savedLandmark = localStorage.getItem('mytea_landmark');
+        if (savedHouse) document.getElementById('addrHouseInput').value = savedHouse;
+        if (savedLandmark) document.getElementById('addrLandmarkInput').value = savedLandmark;
+        window.showScreen('menu');
+      } else {
+        window.showScreen('login');
+      }
+    }
+
+    window.handleInstantLogin = async () => {
+      const name = document.getElementById('loginName').value.trim();
+      const phone = document.getElementById('loginPhone').value.trim();
+      const validPhoneRegex = /^[6-9]\d{9}$/;
+      const dummyBlocked = ['6666666666', '7777777777', '8888888888', '9999999999'];
+
+      if (name.length < 2) {
+        alert("Kripya apna sahi naam likhein!");
+        return;
+      }
+      if (!validPhoneRegex.test(phone) || dummyBlocked.includes(phone)) {
+        alert("Kripya sahi 10-digit Indian mobile number dalein (6, 7, 8 ya 9 se shuru)!");
+        return;
+      }
+
+      if (!generatedOtp) {
+        generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        document.getElementById('otpBox').classList.remove('hidden');
+        document.getElementById('otpHint').innerText = `Verification Code: ${generatedOtp}`;
+        document.getElementById('loginActionBtn').innerText = "Verify & Open Account";
+      } else {
+        const entered = document.getElementById('loginOtp').value.trim();
+        if (entered !== generatedOtp) {
+          alert("Galat Code! Sahi 4-digit code dalein.");
+          return;
+        }
+        currentUser = { name, phone, joinedAt: Date.now() };
+        localStorage.setItem('mytea_user', JSON.stringify(currentUser));
+        try {
+          await setDoc(doc(db, "customers", phone), { name, phone, lastLogin: Date.now() }, { merge: true });
+        } catch (e) {}
+
+        document.getElementById('displayUserName').innerText = name;
+        document.getElementById('myOrdersBtn').classList.remove('hidden');
+        window.showScreen('menu');
+      }
+    };
+
+    window.logoutCustomer = () => {
+      localStorage.removeItem('mytea_user');
+      currentUser = null;
+      generatedOtp = null;
+      document.getElementById('otpBox').classList.add('hidden');
+      document.getElementById('loginOtp').value = '';
+      document.getElementById('loginActionBtn').innerText = "Generate Verification Code";
+      document.getElementById('myOrdersBtn').classList.add('hidden');
+      window.showScreen('login');
+    };
+
+    function getEffectivePrice(item) {
+      return (item.offerPrice && Number(item.offerPrice) > 0 && Number(item.offerPrice) < Number(item.price))
+        ? Number(item.offerPrice)
+        : Number(item.price);
+    }
+
+    window.clearMenuSearch = () => {
+      const inp = document.getElementById('menuSearchInput');
+      if (inp) inp.value = '';
+      window.renderMenu();
+    };
+
+    window.renderMenu = () => {
+      const container = document.getElementById('menuContainer');
+      if (!container || menuItems.length === 0) return;
+
+      const searchInp = document.getElementById('menuSearchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+      const queryText = searchInp ? searchInp.value.trim().toLowerCase() : '';
+      if (clearBtn) clearBtn.classList.toggle('hidden', queryText.length === 0);
+
+      const ordered = sortMenuSpecialTeaFirst(menuItems);
+      const filtered = queryText
+        ? ordered.filter(i =>
+            (i.name || '').toLowerCase().includes(queryText) ||
+            (i.desc || '').toLowerCase().includes(queryText) ||
+            (i.tag || '').toLowerCase().includes(queryText)
+          )
+        : ordered;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">"${queryText}" se milta koi item nahi mila.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const isAvail = item.available !== false;
+        const qty = isAvail ? (cart[item.id] || 0) : 0;
+        const finalPrice = getEffectivePrice(item);
+        const hasOffer = finalPrice < Number(item.price);
+
+        return `
+          <div class="bg-white border ${isAvail ? 'border-slate-100' : 'border-slate-200 opacity-60'} rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="w-3.5 h-3.5 border border-emerald-600 flex items-center justify-center rounded-sm">
+                  <span class="w-1.5 h-1.5 bg-emerald-600 rounded-full"></span>
+                </span>
+                <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">${item.tag || 'Fresh'}</span>
+                ${hasOffer ? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">OFFER</span>` : ''}
+                ${!isAvail ? `<span class="text-[10px] font-extrabold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Out of Stock</span>` : ''}
+              </div>
+              <h3 class="font-bold text-slate-900 text-sm">${item.name}</h3>
+              <p class="text-[11px] text-slate-500 leading-snug">${item.desc || ''}</p>
+              <div class="flex items-center gap-2 pt-0.5">
+                <p class="font-extrabold text-amber-700 text-sm">₹${finalPrice}</p>
+                ${hasOffer ? `<p class="text-xs text-slate-400 line-through">₹${item.price}</p>` : ''}
+              </div>
+            </div>
+            <div>
+              ${!isAvail ? `
+                <span class="text-[11px] font-bold text-slate-400 bg-slate-100 px-3 py-2 rounded-xl inline-block">Unavailable</span>
+              ` : (qty === 0 ? `
+                <button type="button" onclick="window.updateCart('${item.id}', 1)" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 font-extrabold text-xs px-4 py-2 rounded-xl">
+                  + ADD
+                </button>
+              ` : `
+                <div class="flex items-center gap-2 bg-amber-600 text-white rounded-xl px-2 py-1.5 font-bold text-xs">
+                  <button type="button" onclick="window.updateCart('${item.id}', -1)" class="px-1.5">-</button>
+                  <span>${qty}</span>
+                  <button type="button" onclick="window.updateCart('${item.id}', 1)" class="px-1.5">+</button>
+                </div>
+              `)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    window.updateCart = (id, delta) => {
+      cart[id] = (cart[id] || 0) + delta;
+      if (cart[id] <= 0) delete cart[id];
+      window.renderMenu();
+      updateCartBar();
+    };
+
+    function getCartTotals() {
+      let count = 0, subtotal = 0;
+      for (const [id, qty] of Object.entries(cart)) {
+        const item = menuItems.find(i => i.id === id);
+        if (item && item.available !== false) {
+          count += qty;
+          subtotal += getEffectivePrice(item) * qty;
+        }
+      }
+      return { count, subtotal };
+    }
+
+    function updateCartBar() {
+      const { count, subtotal } = getCartTotals();
+      const bar = document.getElementById('cartBar');
+      if (!bar) return;
+      if (count > 0) {
+        bar.classList.remove('hidden');
+        document.getElementById('cartCount').innerText = count;
+        document.getElementById('cartSubtotal').innerText = subtotal;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    window.goToAddress = () => {
+      updateDeliveryFormula();
+      window.showScreen('address');
+      if (!gpsDetected) {
+        window.detectUserGPS();
+      }
+    };
+
+    function calcHaversineKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+      return Math.max(0.5, +(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1));
+    }
+
+    window.detectUserGPS = () => {
+      const btn = document.getElementById('gpsBtn');
+      const statusTxt = document.getElementById('gpsStatusText');
+      btn.innerText = "Detecting...";
+      statusTxt.innerText = "GPS se exact distance measure ho rahi hai...";
+      if (!navigator.geolocation) {
+        statusTxt.innerText = "Is device par GPS support nahi hai.";
+        btn.innerText = "Retry GPS";
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          gpsDetected = true;
+          calculatedKm = calcHaversineKm(cafeSettings.cafeLat, cafeSettings.cafeLng, userCoords.lat, userCoords.lng);
+          document.getElementById('distanceBadge').classList.remove('hidden');
+          document.getElementById('calcDistanceKm').innerText = calculatedKm.toFixed(1);
+          document.getElementById('gpsAccuracyText').innerText = `Accuracy: ±${Math.round(pos.coords.accuracy || 15)}m • ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`;
+          statusTxt.innerText = "Live GPS Verified ✓";
+          btn.innerText = "Verified ✓";
+          btn.classList.replace('bg-blue-600', 'bg-emerald-600');
+          updateDeliveryFormula();
+        },
+        () => {
+          statusTxt.innerText = "Location permission allow karein aur 'Detect GPS' dabayein.";
+          btn.innerText = "Detect GPS";
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    };
+
+    function updateDeliveryFormula() {
+      const { subtotal } = getCartTotals();
+      const base = Number(cafeSettings.baseFee) || 0;
+      const perKm = Number(cafeSettings.perKmFee) || 0;
+      const freeAbove = Number(cafeSettings.freeAboveAmount) || 0;
+      const kmVal = gpsDetected ? calculatedKm : 0;
+      const distFee = gpsDetected ? Math.round(kmVal * perKm) : 0;
+      let total = gpsDetected ? (base + distFee) : 0;
+
+      const notice = document.getElementById('freeDelNotice');
+      if (gpsDetected && freeAbove > 0 && subtotal >= freeAbove) {
+        total = 0;
+        if (notice) {
+          notice.classList.remove('hidden');
+          notice.innerText = `Free Delivery unlocked on orders above ₹${freeAbove}!`;
+        }
+      } else if (notice) {
+        notice.classList.add('hidden');
+      }
+
+      document.getElementById('feeBase').innerText = base;
+      document.getElementById('feePerKmRate').innerText = perKm;
+      document.getElementById('feeKmText').innerText = kmVal.toFixed(1);
+      document.getElementById('feeDist').innerText = distFee;
+      document.getElementById('feeTotal').innerText = gpsDetected ? total : `0 (Detect GPS)`;
+      return total;
+    }
+
+    function hasCodRefusalStrike(phone) {
+      if (!phone) return false;
+      return visibleOrdersCache.some(o => o.customerPhone === phone && (o.status || '').includes('Refused'));
+    }
+
+    window.goToPayment = () => {
+      const house = document.getElementById('addrHouseInput').value.trim();
+      const landmark = document.getElementById('addrLandmarkInput').value.trim();
+
+      if (!gpsDetected) {
+        alert("Pehle 'Detect GPS' button dabakar apni live GPS location measure karein!");
+        return;
+      }
+      if (house.length < 2 || landmark.length < 3) {
+        alert("Kripya House/Flat No. aur Area/Landmark poori tarah bharein!");
+        return;
+      }
+
+      localStorage.setItem('mytea_house', house);
+      localStorage.setItem('mytea_landmark', landmark);
+
+      const { subtotal } = getCartTotals();
+      const delFee = updateDeliveryFormula();
+      const grandTotal = subtotal + delFee;
+
+      document.getElementById('payItemTotal').innerText = subtotal;
+      document.getElementById('payDeliveryTotal').innerText = delFee;
+      document.getElementById('payGrandTotal').innerText = grandTotal;
+      document.getElementById('qrAmountText').innerText = grandTotal;
+      document.getElementById('upiConfirmAmtText').innerText = grandTotal;
+      document.getElementById('upiPaidConfirmCheckbox').checked = false;
+      document.getElementById('upiPayerNameInput').value = '';
+      upiAppOpened = false;
+
+      const codBlocked = hasCodRefusalStrike(currentUser?.phone);
+      const codRadio = document.getElementById('codRadioInput');
+      const codSub = document.getElementById('codSubText');
+      const codLabel = document.getElementById('codOptionLabel');
+
+      if (codBlocked) {
+        codRadio.disabled = true;
+        codRadio.checked = false;
+        document.querySelector('input[name="payMethod"][value="Online UPI"]').checked = true;
+        window.toggleUpiBox(true);
+        codSub.innerText = "COD blocked due to previous doorstep refusal — Pay via UPI";
+        codSub.className = "text-[11px] font-bold text-red-600";
+        codLabel.classList.add('opacity-60');
+      } else {
+        codRadio.disabled = false;
+        codSub.innerText = "Order milne par cash dein";
+        codSub.className = "text-[11px] text-slate-500";
+        codLabel.classList.remove('opacity-60');
+      }
+
+      const upiUrl = `upi://pay?pa=${OWNER_UPI_ID}&pn=${encodeURIComponent(OWNER_NAME)}&am=${grandTotal}&cu=INR`;
+      document.getElementById('dynamicQrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(upiUrl)}`;
+
+      window.showScreen('payment');
+    };
+
+    window.toggleUpiBox = (isUpi) => {
+      document.getElementById('upiDetailsBox').classList.toggle('hidden', !isUpi);
+    };
+
+    window.copyUpiId = () => {
+      navigator.clipboard.writeText(OWNER_UPI_ID);
+      alert("UPI ID copied: " + OWNER_UPI_ID);
+    };
+
+    window.launchUpiApp = () => {
+      upiAppOpened = true;
+      const amount = document.getElementById('payGrandTotal').innerText;
+      window.location.href = `upi://pay?pa=${OWNER_UPI_ID}&pn=${encodeURIComponent(OWNER_NAME)}&am=${amount}&cu=INR`;
+    };
+
+    window.submitRealOrder = async () => {
+      const selected = document.querySelector('input[name="payMethod"]:checked');
+      if (!selected) {
+        alert("Kripya payment method chunein!");
+        return;
+      }
+      const payMethod = selected.value;
+      const paidChecked = document.getElementById('upiPaidConfirmCheckbox').checked;
+      const payerName = document.getElementById('upiPayerNameInput').value.trim();
+
+      if (payMethod.includes('UPI') && (!upiAppOpened || !paidChecked)) {
+        alert("Online UPI order ke liye pehle 'Open UPI App & Pay' dabayein aur payment confirmation checkbox tick karein!");
+        return;
+      }
+
+      const btn = document.getElementById('placeOrderBtn');
+      btn.disabled = true;
+      btn.innerText = "Placing Order...";
+
+      const itemsList = Object.entries(cart).map(([id, qty]) => {
+        const item = menuItems.find(i => i.id === id);
+        return `${item.name} x${qty}`;
+      });
+
+      const house = document.getElementById('addrHouseInput').value.trim();
+      const landmark = document.getElementById('addrLandmarkInput').value.trim();
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      const orderData = {
+        customerName: currentUser.name,
+        customerPhone: currentUser.phone,
+        payerName: payMethod.includes('UPI') ? (payerName || currentUser.name) : null,
+        address: `${house}, ${landmark}`,
+        distanceKm: calculatedKm,
+        gpsLink: userCoords ? `https://maps.google.com/?q=${userCoords.lat},${userCoords.lng}` : null,
+        items: itemsList,
+        itemTotal: Number(document.getElementById('payItemTotal').innerText),
+        deliveryCharge: Number(document.getElementById('payDeliveryTotal').innerText),
+        grandTotal: Number(document.getElementById('payGrandTotal').innerText),
+        paymentMethod: payMethod,
+        status: payMethod.includes('UPI') ? 'UPI Paid - Pending Cafe Verify' : 'New COD Order - Pending Cafe Accept',
+        ownerReceivedOk: false,
+        customerReceivedOk: false,
+        orderDate: `${dateStr}, ${timeStr}`,
+        dateKey: getLocalDateISO(now),
+        createdAt: Date.now()
+      };
+
+      try {
+        await addDoc(collection(db, "orders"), orderData);
+        cart = {};
+        upiAppOpened = false;
+        updateCartBar();
+        window.renderMenu();
+        btn.disabled = false;
+        btn.innerText = "Confirm & Place Order";
+        alert("Order Placed Successfully!");
+        window.openMyOrders();
+      } catch (err) {
+        alert("Network/Database Error! Dobara koshish karein.");
+        btn.disabled = false;
+        btn.innerText = "Confirm & Place Order";
+      }
+    };
+
+    function isOrderClearedDualOk(o) {
+      return Boolean(o.ownerReceivedOk) && Boolean(o.customerReceivedOk);
+    }
+
+    window.cancelOrderByCustomer = async (orderId, currentStatus) => {
+      if ((currentStatus || '').includes('Preparing') || (currentStatus || '').includes('Out for Delivery') || (currentStatus || '').includes('Cleared') || (currentStatus || '').includes('Cancelled')) {
+        alert("Order accept/prepare hone ke baad cancel nahi ho sakta.");
+        return;
+      }
+      if (confirm("Kya aap is order ko cancel karna chahte hain?")) {
+        await updateDoc(doc(db, "orders", orderId), { status: 'Cancelled by Customer' });
+      }
+    };
+
+    window.customerConfirmReceivedOk = async (orderId) => {
+      const target = visibleOrdersCache.find(o => o.id === orderId);
+      const ownerDone = Boolean(target?.ownerReceivedOk);
+      const nextStatus = ownerDone ? 'Cleared & Completed ✓' : 'Customer OK (Waiting Owner OK)';
+      await updateDoc(doc(db, "orders", orderId), {
+        customerReceivedOk: true,
+        status: nextStatus
+      });
+    };
+
+    function renderCustomerOrdersList() {
+      const list = document.getElementById('customerOrdersList');
+      if (!list) return;
+      const myDocs = visibleOrdersCache.filter(o => o.customerPhone === currentUser?.phone);
+
+      const clearedOnly = myDocs.filter(isOrderClearedDualOk);
+      document.getElementById('accTotalOrdersCount').innerText = clearedOnly.length;
+      const totalSpent = clearedOnly.reduce((sum, o) => sum + (Number(o.grandTotal) || 0), 0);
+      document.getElementById('accTotalSpent').innerText = totalSpent;
+
+      if (myDocs.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Abhi tak aapne koi order nahi kiya hai.</p>`;
+        return;
+      }
+      list.innerHTML = myDocs.map(o => {
+        const canCancel = (o.status || '').includes('Pending Cafe');
+        const isClosed = (o.status || '').includes('Cancelled') || (o.status || '').includes('Refused') || (o.status || '').includes('Not Available') || (o.status || '').includes('Payment Not Received');
+        const custOk = Boolean(o.customerReceivedOk);
+        const ownerOk = Boolean(o.ownerReceivedOk);
+
+        return `
+          <div class="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm space-y-2">
+            <div class="flex justify-between items-center gap-2">
+              <span class="text-[11px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">${o.status}</span>
+              <span class="text-sm font-extrabold text-slate-900">₹${o.grandTotal}</span>
+            </div>
+            <p class="text-xs font-bold text-slate-800">${o.items.join(', ')}</p>
+            <div class="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+              <span>📅 ${o.orderDate || 'Recent'}</span>
+              <span>${o.paymentMethod}</span>
+            </div>
+            <div class="text-[10px] font-bold flex justify-between bg-slate-50 px-2.5 py-1.5 rounded-lg">
+              <span>Owner OK: ${ownerOk ? '✓ Yes' : 'Pending'}</span>
+              <span>Customer OK: ${custOk ? '✓ Yes' : 'Pending'}</span>
+            </div>
+            ${canCancel ? `
+              <button type="button" onclick="window.cancelOrderByCustomer('${o.id}', '${o.status}')" class="w-full mt-1 bg-red-50 text-red-700 border border-red-200 text-xs font-bold py-1.5 rounded-lg">
+                Cancel Order (Before Accept)
+              </button>
+            ` : ''}
+            ${(!isClosed && !custOk) ? `
+              <button type="button" onclick="window.customerConfirmReceivedOk('${o.id}')" class="w-full mt-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold py-2 rounded-lg">
+                Customer: Received OK
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.openMyOrders = () => {
+      window.showScreen('orders');
+      if (currentUser) {
+        document.getElementById('accProfileName').innerText = currentUser.name;
+        document.getElementById('accProfilePhone').innerText = `+91 ${currentUser.phone}`;
+      }
+      renderCustomerOrdersList();
+    };
+
+    // OWNER SESSION, PASSWORD CHANGE & HISTORY RESET
+    window.openAdminModal = () => {
+      if (localStorage.getItem(OWNER_SESSION_KEY) === '1') {
+        initOneSignalSafe(true);
+        syncConfigInputs();
+        window.showScreen('admin');
+        renderAdminOrdersAndAlerts();
+        return;
+      }
+      document.getElementById('adminPasswordInput').value = '';
+      document.getElementById('adminModal').classList.remove('hidden');
+      safeRenderIcons();
+    };
+    window.closeAdminModal = () => document.getElementById('adminModal').classList.add('hidden');
+
+    window.verifyAdminLogin = () => {
+      const pass = document.getElementById('adminPasswordInput').value.trim();
+      if (pass === activeOwnerPassword || pass === DEFAULT_OWNER_PASS) {
+        localStorage.setItem(OWNER_SESSION_KEY, '1');
+        window.closeAdminModal();
+        document.getElementById('adminPasswordInput').value = '';
+        initOneSignalSafe(true);
+        syncConfigInputs();
+        window.showScreen('admin');
+        renderAdminOrdersAndAlerts();
+      } else {
+        alert("Access Denied! Sahi owner password dalein.");
+      }
+    };
+
+    window.lockOwnerSession = () => {
+      localStorage.removeItem(OWNER_SESSION_KEY);
+      stopAlertRingtone();
+      window.showScreen('menu');
+      alert("Owner Dashboard Locked.");
+    };
+
+    window.exitAdminDashboard = () => {
+      stopAlertRingtone();
+      window.showScreen('menu');
+    };
+
+    window.changeOwnerPassword = async () => {
+      const currP = document.getElementById('currPassInput').value.trim();
+      const newP = document.getElementById('newPassInput').value.trim();
+
+      if (currP !== activeOwnerPassword && currP !== DEFAULT_OWNER_PASS) {
+        alert("Current password galat hai!");
+        return;
+      }
+      if (newP.length < 4) {
+        alert("Naya password kam se kam 4 characters ka rakhein!");
+        return;
+      }
+
+      activeOwnerPassword = newP;
+      localStorage.setItem('mytea_owner_pass_cache', newP);
+      localStorage.setItem(OWNER_SESSION_KEY, '1');
+      await setDoc(doc(db, "settings", "cafe"), { ownerPassword: newP }, { merge: true });
+
+      document.getElementById('currPassInput').value = '';
+      document.getElementById('newPassInput').value = '';
+      alert("Owner password successfully update ho gaya!");
+    };
+
+    window.resetOrderHistoryForFreshStart = async () => {
+      if (!confirm("Kya aap purani saari order history clear karke bilkul fresh start karna chahte hain?")) return;
+      const nowTs = Date.now();
+      historyResetAt = nowTs;
+      localStorage.setItem('mytea_history_reset_at', String(nowTs));
+      await setDoc(doc(db, "settings", "cafe"), { historyResetAt: nowTs }, { merge: true });
+      applyHistoryCutoff();
+      alert("History clear ho gayi! App ab bilkul fresh mode mein hai.");
+    };
+
+    window.switchAdminTab = (tab) => {
+      document.getElementById('adminTabOrders').classList.toggle('hidden', tab !== 'orders');
+      document.getElementById('adminTabMenu').classList.toggle('hidden', tab !== 'menu');
+      document.getElementById('adminTabRecords').classList.toggle('hidden', tab !== 'records');
+
+      const activeCls = "py-2 rounded-lg text-[11px] font-extrabold bg-amber-500 text-slate-950";
+      const idleCls = "py-2 rounded-lg text-[11px] font-extrabold text-slate-300";
+
+      document.getElementById('tabOrdersBtn').className = tab === 'orders' ? activeCls : idleCls;
+      document.getElementById('tabMenuBtn').className = tab === 'menu' ? activeCls : idleCls;
+      document.getElementById('tabRecordsBtn').className = tab === 'records' ? activeCls : idleCls;
+
+      if (tab === 'records') window.renderSalesRecords();
+    };
+
+    window.enablePushAlerts = async () => {
+      initOneSignalSafe(true);
+      if ("Notification" in window) {
+        const perm = await Notification.requestPermission();
+        if (perm === "granted") {
+          document.getElementById('notifPermBtn').innerText = "Alert Sound Active ✓";
+          playSingleBeep();
+        } else {
+          alert("Browser/App settings se Notifications allow karein.");
+        }
+      }
+    };
+
+    window.openOwnerWhatsAppAlert = () => {
+      const latest = visibleOrdersCache[0];
+      const msg = latest
+        ? `My Tea Order Alert: ${latest.customerName} (${latest.customerPhone}) - ₹${latest.grandTotal} [${latest.paymentMethod}] - ${latest.items.join(', ')}`
+        : `My Tea Owner Alert Check - Active Dashboard`;
+      window.open(`https://wa.me/${OWNER_WA_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    function playSingleBeep() {
+      let ctx;
+      let osc;
+      let gain;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        ctx = new AudioContextClass();
+        osc = ctx.createOscillator();
+        gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(920, ctx.currentTime);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.onended = () => {
+          try { osc.disconnect(); } catch (e) {}
+          try { gain.disconnect(); } catch (e) {}
+          if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
+        };
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      } catch (e) {
+        try { if (osc) osc.disconnect(); } catch (ignored) {}
+        try { if (gain) gain.disconnect(); } catch (ignored) {}
+        try { if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {}); } catch (ignored) {}
+      }
+    }
+
+    function startContinuousAlert(orderSummary) {
+      const adminScreen = document.getElementById('screen-admin');
+      if (!adminScreen || adminScreen.classList.contains('hidden')) {
+        window.stopAlertRingtone();
+        return;
+      }
+      if ("Notification" in window && Notification.permission === "granted") {
+        try { new Notification("🔔 Naya Order - My Tea", { body: orderSummary }); } catch (e) {}
+      }
+      if (!ringInterval) {
+        playSingleBeep();
+        ringInterval = setInterval(() => {
+          const screen = document.getElementById('screen-admin');
+          if (!screen || screen.classList.contains('hidden')) {
+            window.stopAlertRingtone();
+            return;
+          }
+          playSingleBeep();
+        }, 2500);
+      }
+    }
+
+    window.stopAlertRingtone = () => {
+      if (ringInterval) {
+        clearInterval(ringInterval);
+        ringInterval = null;
+      }
+    };
+
+    window.ownerConfirmReceivedOk = async (orderId) => {
+      const target = visibleOrdersCache.find(o => o.id === orderId);
+      const custDone = Boolean(target?.customerReceivedOk);
+      const nextStatus = custDone ? 'Cleared & Completed ✓' : 'Owner OK (Waiting Customer OK)';
+      await updateDoc(doc(db, "orders", orderId), {
+        ownerReceivedOk: true,
+        status: nextStatus
+      });
+    };
+
+    window.handlePaymentNotReceived = async (orderId, amount) => {
+      await updateDoc(doc(db, "orders", orderId), {
+        status: 'Payment Not Received (Cancelled)',
+        ownerReceivedOk: false,
+        customerReceivedOk: false
+      });
+      alert(`Order mark hua: Payment Not Received (₹${amount} UPI app mein credit nahi mila).`);
+    };
+
+    window.handleOnlineNotAvailableRefund = async (orderId, amount) => {
+      await updateDoc(doc(db, "orders", orderId), { status: 'Not Available (UPI Refund Needed)' });
+      alert(`Order mark hua: Not Available (UPI Refund Needed).\nKripya apne UPI app se customer ko ₹${amount} refund bhej dein.`);
+    };
+
+    window.handleCodNotAvailable = async (orderId) => {
+      await updateDoc(doc(db, "orders", orderId), { status: 'Not Available (COD Cancelled)' });
+      alert("COD order cancel mark ho gaya (No refund needed for COD).");
+    };
+
+    window.handleDoorstepRefused = async (orderId) => {
+      await updateDoc(doc(db, "orders", orderId), {
+        status: 'Cancelled at Doorstep (Refused)',
+        ownerReceivedOk: false,
+        customerReceivedOk: false
+      });
+      alert("Doorstep Refused mark ho gaya! Is customer number par COD strike lag gayi hai.");
+    };
+
+    function renderAdminOrdersAndAlerts() {
+      const pendingOrders = visibleOrdersCache.filter(o => (o.status || '').includes('Pending Cafe'));
+
+      if (pendingOrders.length > 0 && !document.getElementById('screen-admin').classList.contains('hidden')) {
+        startContinuousAlert(`${pendingOrders[0].customerName}: ₹${pendingOrders[0].grandTotal}`);
+      } else {
+        stopAlertRingtone();
+      }
+
+      const container = document.getElementById('adminOrdersList');
+      if (!container) return;
+
+      if (visibleOrdersCache.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Abhi koi naya order nahi hai (Fresh start active).</p>`;
+      } else {
+        container.innerHTML = visibleOrdersCache.map(o => {
+          const isNew = (o.status || '').includes('Pending Cafe');
+          const isUpi = (o.paymentMethod || '').includes('UPI');
+          const ownerOk = Boolean(o.ownerReceivedOk);
+          const custOk = Boolean(o.customerReceivedOk);
+
+          return `
+            <div class="bg-slate-800 border ${isNew ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-slate-700'} rounded-2xl p-3.5 space-y-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-bold text-sm text-white">${o.customerName} • <a href="tel:${o.customerPhone}" class="text-amber-300 underline">${o.customerPhone}</a></p>
+                  ${(isUpi && o.payerName && o.payerName !== o.customerName) ? `<p class="text-[10px] text-sky-300 font-bold">UPI Payer Name: ${o.payerName}</p>` : ''}
+                  <p class="text-[10px] text-slate-400">${o.orderDate || ''}</p>
+                  <p class="text-xs text-amber-300 font-bold mt-1">${o.items.join(', ')}</p>
+                </div>
+                <span class="font-extrabold text-emerald-400 text-base">₹${o.grandTotal}</span>
+              </div>
+              <p class="text-xs text-slate-300 bg-slate-900/80 p-2 rounded-lg">📍 ${o.address} (${o.distanceKm} km)</p>
+              ${o.gpsLink ? `<a href="${o.gpsLink}" target="_blank" class="inline-block text-[11px] text-blue-400 underline font-bold">Open Rider GPS Map →</a>` : ''}
+              <div class="flex items-center justify-between text-[11px] pt-1">
+                <span class="font-bold ${isUpi ? 'text-sky-400' : 'text-emerald-400'}">
+                  ${isUpi ? '💳 Online UPI (Check UPI App)' : '💵 Cash on Delivery'}
+                </span>
+                <span class="font-bold text-amber-400">${o.status}</span>
+              </div>
+              <div class="text-[10px] bg-slate-900/70 px-2.5 py-1.5 rounded-lg flex justify-between font-bold">
+                <span class="${ownerOk ? 'text-emerald-400' : 'text-slate-400'}">Owner OK: ${ownerOk ? '✓' : 'No'}</span>
+                <span class="${custOk ? 'text-emerald-400' : 'text-slate-400'}">Customer OK: ${custOk ? '✓' : 'No'}</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-1.5 pt-2">
+                <button type="button" onclick="window.updateOrderStatus('${o.id}', 'Accepted & Preparing')" class="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold py-2 rounded-lg">Accept & Prepare</button>
+                <button type="button" onclick="window.updateOrderStatus('${o.id}', 'Out for Delivery')" class="bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold py-2 rounded-lg">Out for Delivery</button>
+                <button type="button" onclick="window.ownerConfirmReceivedOk('${o.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold py-2 rounded-lg">${ownerOk ? 'Owner OK ✓' : 'Owner: Received OK'}</button>
+                <button type="button" onclick="window.handleDoorstepRefused('${o.id}')" class="bg-red-600/90 hover:bg-red-700 text-white text-[11px] font-bold py-2 rounded-lg">Doorstep Refused</button>
+              </div>
+
+              ${isUpi ? `
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button type="button" onclick="window.handlePaymentNotReceived('${o.id}', ${o.grandTotal})" class="bg-rose-700 hover:bg-rose-800 text-white text-[11px] font-bold py-2 rounded-lg">
+                    Payment Not Received
+                  </button>
+                  <button type="button" onclick="window.handleOnlineNotAvailableRefund('${o.id}', ${o.grandTotal})" class="bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold py-2 rounded-lg">
+                    Not Available / Refund
+                  </button>
+                </div>
+              ` : `
+                <button type="button" onclick="window.handleCodNotAvailable('${o.id}')" class="w-full bg-slate-700 hover:bg-slate-600 text-amber-200 text-[11px] font-bold py-2 rounded-lg">
+                  Not Available (Cancel COD)
+                </button>
+              `}
+            </div>
+          `;
+        }).join('');
+      }
+
+      window.renderSalesRecords();
+    }
+
+    window.renderSalesRecords = () => {
+      const clearedAll = visibleOrdersCache.filter(isOrderClearedDualOk);
+      const refundAll = visibleOrdersCache.filter(o => (o.status || '').includes('Not Available') || (o.status || '').includes('Cancelled by Customer') || (o.status || '').includes('Payment Not Received'));
+      const refusedAll = visibleOrdersCache.filter(o => (o.status || '').includes('Refused'));
+
+      const allRev = clearedAll.reduce((s, o) => s + (Number(o.grandTotal) || 0), 0);
+
+      document.getElementById('recAllTimeOrders').innerText = clearedAll.length;
+      document.getElementById('recAllTimeRevenue').innerText = allRev;
+      document.getElementById('recRefundCount').innerText = refundAll.length;
+      document.getElementById('recRefusedCount').innerText = refusedAll.length;
+
+      const selectedDate = document.getElementById('recordDateFilter').value;
+      const dayCleared = clearedAll.filter(o => {
+        if (o.dateKey) return o.dateKey === selectedDate;
+        if (o.createdAt) return getLocalDateISO(new Date(o.createdAt)) === selectedDate;
+        return false;
+      });
+
+      const dayRev = dayCleared.reduce((s, o) => s + (Number(o.grandTotal) || 0), 0);
+      document.getElementById('recDayOrders').innerText = dayCleared.length;
+      document.getElementById('recDayRevenue').innerText = dayRev;
+
+      const logEl = document.getElementById('adminRecordsLog');
+      if (!logEl) return;
+      if (visibleOrdersCache.length === 0) {
+        logEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No orders after fresh start.</p>`;
+        return;
+      }
+      logEl.innerHTML = visibleOrdersCache.map(o => `
+        <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-2.5 flex items-center justify-between text-xs">
+          <div>
+            <p class="font-bold text-white">${o.customerName} • ₹${o.grandTotal}</p>
+            <p class="text-[10px] text-slate-400">${o.orderDate || ''} • ${o.paymentMethod}</p>
+          </div>
+          <span class="text-[10px] font-bold ${isOrderClearedDualOk(o) ? 'text-emerald-400' : 'text-amber-400'}">${o.status}</span>
+        </div>
+      `).join('');
+    };
+
+    window.saveDeliveryConfig = async () => {
+      const baseFee = Math.max(0, Number(document.getElementById('cfgBaseFee').value) || 0);
+      const perKmFee = Math.max(0, Number(document.getElementById('cfgPerKm').value) || 0);
+      const freeAboveAmount = Math.max(0, Number(document.getElementById('cfgFreeAbove').value) || 0);
+
+      cafeSettings.baseFee = baseFee;
+      cafeSettings.perKmFee = perKmFee;
+      cafeSettings.freeAboveAmount = freeAboveAmount;
+
+      await setDoc(doc(db, "settings", "cafe"), { baseFee, perKmFee, freeAboveAmount }, { merge: true });
+      updateDeliveryFormula();
+      alert("Delivery charge rule update ho gaya!");
+    };
+
+    window.updateOrderStatus = async (orderId, newStatus) => {
+      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+    };
+
+    window.addNewMenuItem = async () => {
+      const name = document.getElementById('newItemName').value.trim();
+      const desc = document.getElementById('newItemDesc').value.trim();
+      const price = Number(document.getElementById('newItemPrice').value);
+      const offerPrice = Number(document.getElementById('newItemOffer').value) || null;
+      const tag = document.getElementById('newItemTag').value.trim() || 'Special';
+
+      if (!name || !price || price <= 0) {
+        alert("Item ka naam aur sahi price dalein!");
+        return;
+      }
+
+      const id = 'item_' + Date.now();
+      await setDoc(doc(db, "menu", id), { id, name, desc, price, offerPrice, tag, available: true });
+
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemDesc').value = '';
+      document.getElementById('newItemPrice').value = '';
+      document.getElementById('newItemOffer').value = '';
+      document.getElementById('newItemTag').value = '';
+      alert("Naya item menu mein add ho gaya!");
+    };
+
+    function renderAdminMenu() {
+      const list = document.getElementById('adminMenuList');
+      if (!list) return;
+      const ordered = sortMenuSpecialTeaFirst(menuItems);
+      list.innerHTML = ordered.map(item => {
+        const isAvail = item.available !== false;
+        return `
+          <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-bold text-sm text-white">${item.name}</p>
+                <p class="text-[11px] text-slate-400">Price: ₹${item.price} ${item.offerPrice ? `• Offer: ₹${item.offerPrice}` : ''}</p>
+              </div>
+              <button type="button" onclick="window.toggleItemStock('${item.id}', ${!isAvail})" class="text-[11px] font-extrabold px-2.5 py-1 rounded-lg ${isAvail ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40' : 'bg-red-600/20 text-red-300 border border-red-500/40'}">
+                ${isAvail ? 'In Stock ✓' : 'Out of Stock'}
+              </button>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="editPrice_${item.id}" type="number" value="${item.price}" placeholder="Price" class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white" />
+              <input id="editOffer_${item.id}" type="number" value="${item.offerPrice || ''}" placeholder="Offer ₹" class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white" />
+              <button type="button" onclick="window.saveItemPricing('${item.id}')" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold py-1.5 rounded-lg">Update</button>
+              <button type="button" onclick="window.deleteMenuItem('${item.id}')" class="bg-red-600/80 hover:bg-red-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg">Del</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleItemStock = async (id, status) => {
+      await updateDoc(doc(db, "menu", id), { available: status });
+    };
+
+    window.saveItemPricing = async (id) => {
+      const price = Number(document.getElementById(`editPrice_${id}`).value);
+      const offerVal = document.getElementById(`editOffer_${id}`).value;
+      const offerPrice = offerVal ? Number(offerVal) : null;
+      if (!price || price <= 0) { alert("Valid price dalein!"); return; }
+      await updateDoc(doc(db, "menu", id), { price, offerPrice });
+      alert("Price/Offer update ho gaya!");
+    };
+
+    window.deleteMenuItem = async (id) => {
+      if (confirm("Kya aap is item ko menu se hatana chahte hain?")) {
+        await deleteDoc(doc(db, "menu", id));
+      }
+    };
+
+    window.setCafeLocationHere = () => {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        cafeSettings.cafeLat = pos.coords.latitude;
+        cafeSettings.cafeLng = pos.coords.longitude;
+        await setDoc(doc(db, "settings", "cafe"), {
+          cafeLat: cafeSettings.cafeLat,
+          cafeLng: cafeSettings.cafeLng
+        }, { merge: true });
+        alert("Cafe GPS location successfully save ho gayi!");
+      });
+    };
+
+    safeRenderIcons();
+  
+    // Start only after all module callbacks have been registered on window.
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootAppState, { once: true });
+    } else {
+      bootAppState();
+    }
+</script>
+</body>
+</html>
