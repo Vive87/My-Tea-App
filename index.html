@@ -870,7 +870,10 @@
         (pos) => {
           userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           gpsDetected = true;
-          calculatedKm = calcHaversineKm(cafeSettings.cafeLat, cafeSettings.cafeLng, userCoords.Lat, userCoords.Lng);            
+          const shopLat = Number(cafeSettings?.cafeLat || cafeSettings?.lat || 28.3964);
+const shopLng = Number(cafeSettings?.cafeLng || cafeSettings?.lng || 77.9963);
+calculatedKm = calcHaversineKm(shopLat, shopLng, userCoords.lat, userCoords.lng);
+          
           document.getElementById('distanceBadge').classList.remove('hidden');
           document.getElementById('calcDistanceKm').innerText = calculatedKm.toFixed(1);
           document.getElementById('gpsAccuracyText').innerText = `Accuracy: ±${Math.round(pos.coords.accuracy || 15)}m • ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`;
