@@ -990,9 +990,10 @@
     };
 
     window.launchUpiApp = () => {
-      upiAppOpened = true;
-      window.location.href = `upi://pay?pa=${encodeURIComponent(OWNER_UPI_ID)}&pn=${encodeURIComponent(OWNER_NAME)}&cu=INR`;
-    };
+  upiAppOpened = true;
+  window.location.href = "upi://pay?pa=paytmqr723vxq@ptys&pn=Paytm";
+};
+    
 
     window.submitRealOrder = async () => {
       const selected = document.querySelector('input[name="payMethod"]:checked');
