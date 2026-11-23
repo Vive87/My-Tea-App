@@ -709,6 +709,13 @@
         currentUser = { name, phone, joinedAt: Date.now() };
         localStorage.setItem('mytea_user', JSON.stringify(currentUser));
         try {
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.User.addTag("phone", String(phone));
+  });
+} catch (err) {}
+        
+        try {
           await setDoc(doc(db, "customers", phone), { name, phone, lastLogin: Date.now() }, { merge: true });
         } catch (e) {}
 
@@ -1091,6 +1098,15 @@ calculatedKm = calcHaversineKm(shopLat, shopLng, userCoords.lat, userCoords.lng)
           if (!st.includes('Pending Cafe')) return;
           tx.update(ref, { status: 'Cancelled by Customer' });
         });
+        fetch("https://golu-order-push.vk2123783.workers.dev/", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    title: "❌ Order Cancelled - Golu Restaurant",
+    message: `${currentUser?.name || "Customer"} (${currentUser?.phone || ""}) ne order cancel kar diya hai.`
+  })
+}).catch(() => {});
+        
       }
     };
 
@@ -1336,18 +1352,33 @@ calculatedKm = calcHaversineKm(shopLat, shopLng, userCoords.lat, userCoords.lng)
     };
 
     window.ownerConfirmReceivedOk = async (orderId) => {
-      await runTransaction(db, async (tx) => {
-        const ref = doc(db, "orders", orderId);
-        const snap = await tx.get(ref);
-        if (!snap.exists()) return;
-        const custDone = Boolean(snap.data().customerReceivedOk);
-        const nextStatus = custDone ? 'Cleared & Completed ✓' : 'Owner OK (Waiting Customer OK)';
-        tx.update(ref, {
-          ownerReceivedOk: true,
-          status: nextStatus
-        });
-      });
-    };
+  let customerPhone = "";
+  await runTransaction(db, async (tx) => {
+    const ref = doc(db, "orders", orderId);
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    customerPhone = snap.data().customerPhone || "";
+    const custDone = Boolean(snap.data().customerReceivedOk);
+    const nextStatus = custDone ? 'Cleared & Completed ✓' : 'Owner OK (Waiting Customer)';
+    tx.update(ref, {
+      ownerReceivedOk: true,
+      status: nextStatus
+    });
+  });
+
+  if (customerPhone) {
+    fetch("https://golu-order-push.vk2123783.workers.dev/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        targetPhone: customerPhone,
+        title: "🎉 Order Delivered - Golu Restaurant",
+        message: "Aapka order deliver ho gaya hai! Dhanyawad, khane ka anand lein."
+      })
+    }).catch(() => {});
+  }
+};
+    
 
     window.handlePaymentNotReceived = async (orderId, amount) => {
       await runTransaction(db, async (tx) => {
@@ -1519,11 +1550,36 @@ calculatedKm = calcHaversineKm(shopLat, shopLng, userCoords.lat, userCoords.lng)
     };
 
     window.updateOrderStatus = async (orderId, newStatus) => {
-      await runTransaction(db, async (tx) => {
-        const ref = doc(db, "orders", orderId);
-        tx.update(ref, { status: newStatus });
-      });
-    };
+  let customerPhone = "";
+  await runTransaction(db, async (tx) => {
+    const ref = doc(db, "orders", orderId);
+    const snap = await tx.get(ref);
+    if (snap.exists()) customerPhone = snap.data().customerPhone || "";
+    tx.update(ref, { status: newStatus });
+  });
+
+  if (customerPhone) {
+    let notifTitle = "🔔 Order Update - Golu Restaurant";
+    let notifMsg = `Aapke order ka status ab '${newStatus}' hai.`;
+    if (newStatus.includes("Accept")) {
+      notifTitle = "✅ Order Accepted - Golu Restaurant";
+      notifMsg = "Badhai ho! Aapka order accept ho gaya hai aur ban raha hai.";
+    } else if (newStatus.includes("Out for Delivery")) {
+      notifTitle = "🛵 Out for Delivery - Golu Restaurant";
+      notifMsg = "Aapka order raste mein hai, jald hi aapke paas pahuchega!";
+    }
+    fetch("https://golu-order-push.vk2123783.workers.dev/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        targetPhone: customerPhone,
+        title: notifTitle,
+        message: notifMsg
+      })
+    }).catch(() => {});
+  }
+};
+    
 
     window.addNewMenuItem = async () => {
       const name = document.getElementById('newItemName').value.trim();
