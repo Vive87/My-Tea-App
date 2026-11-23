@@ -870,7 +870,7 @@
         (pos) => {
           userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           gpsDetected = true;
-          calculatedKm = calcHaversineKm(cafeSettings.cafeLat, cafeSettings.cafeLng, userCoords.lat, userCoords.lng);
+          calculatedKm = calcHaversineKm(cafeSettings.cafeLat, cafeSettings.cafeLng, userCoords.Lat, userCoords.Lng);            
           document.getElementById('distanceBadge').classList.remove('hidden');
           document.getElementById('calcDistanceKm').innerText = calculatedKm.toFixed(1);
           document.getElementById('gpsAccuracyText').innerText = `Accuracy: ±${Math.round(pos.coords.accuracy || 15)}m • ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`;
@@ -1623,7 +1623,7 @@
   <div class="text-center space-y-2">
     <h4 class="text-sm font-bold text-amber-400">Golu Restaurant</h4>
     <p>📍 Local Delivery Zone (1-3 KM), Uttar Pradesh, India</p>
-    <p>📞 Support: +91-8218833498 | ✉️ support@golurestaurant.in</p>
+    <p>📞 Support: +91-9536196469 | ✉️ support@golurestaurant.in</p>
     <div class="flex flex-wrap justify-center gap-3 pt-2 text-amber-300 underline">
       <button type="button" onclick="openPolicyModal('terms')">Terms & Conditions</button>
       <button type="button" onclick="openPolicyModal('privacy')">Privacy Policy</button>
