@@ -1172,6 +1172,12 @@ calculatedKm = calcHaversineKm(shopLat, shopLng, userCoords.lat, userCoords.lng)
                 Customer: Received OK
               </button>
             ` : ''}
+            ${!isClosed ? `
+  <a href="tel:+918218833498" class="mt-2.5 w-full inline-flex items-center justify-center gap-2 bg-green-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-sm">
+    📞 Order Delay? Call Cafe (8218833498)
+  </a>
+` : ''}
+
           </div>
         `;
       }).join('');
